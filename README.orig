@@ -1,0 +1,142 @@
+Dnmap
+=====
+Created by eldraco@gmail.com, www.mateslab.com.ar
+
+Last Version
+============
+0.6
+
+What is dnmap?
+--------------
+dnmap is a framework to distribute nmap scans among several clients. It reads an already created file with nmap commands and send those commands to each client connected to it.
+The framework use a client/server architecture. The server knows what to do and the clients do it. All the logic and statistics are managed in the server. Nmap output is stored on both server and client.
+Usually you would want this if you have to scan a large group of hosts and you have several different internet connections (or friends that want to help you)
+
+
+Topology
+--------
+|--------------------|
+| nmap commands file |
+|--------------------|
+          |
+          |
+         \|/
+  |--------------|
+  | dnmap_server |
+  |--------------|
+          |
+          |  |--------------|
+          |- | dnmap_client |-> Packets to the net...
+          |  |--------------|
+          |
+          |  |--------------|
+          |- | dnmap_client |-> Packets to the net...
+          |  |--------------|
+          |
+          |  |--------------|
+          |- | dnmap_client |-> Packets to the net...
+          |  |--------------|
+          .
+          .
+          .
+
+Basic usage
+-----------
+1- Put some nmap commands on a file like commands.txt
+2- Start the dnmap_server 
+ ./dnmap_server -f commands.txt
+3- Start any number of clients
+ ./dnmap_client -s <server-ip> -a <alias>
+
+The server will start to give nmap commands to the clients and results will be stored on both sides.
+
+
+Features of the framework
+------------------------
+- Clients can be run on any computer on Internet. Do not have to be on a local cluster or anything.
+- It uses the TLS protocol for encryption.
+
+
+dnmap_server features
+---------------------
+- If the server gets down, clients continue trying to connect until the server gets back online.
+- If the server gets down, when you put it up again it will send commands starting from the last command given before the shutdown. You do not need to remember where it was.
+- You can add new commands to the original file without having to stop the server. The server will read them automatically.
+- If some client goes down, the server will remember which command it was executing and it will re-schedule it for later.
+- It will store every detail of the operations in a log file.
+- It shows real time statistics about the operation of each client, including:
+  - Number of commands executed
+  - Last time seen
+  - Uptime
+  - Version of the client
+  - If the client is being run as root or not.
+  - It calculates the amount of commands executed per minute
+  - The historic average of the amount of commands executed per minute
+  - The status of the client (Online, Offline, Executing or Storing)
+- You can choose which port to use. Defaults to 46001
+- Only the Online clients are shown in the running stats.
+
+
+dnmap_client features
+---------------------
+- If the server gets down, it keeps connecting to it until it gets up again.
+- Strip strange characters from the command sent by the server. Tries to avoid command injection vulns.
+- It only executes the nmap command. It deletes the command send by the server and changes it by the known and trusted nmap binary on the system.
+- You can select an alias for your user.
+- You can change which port the client connects to.
+- If the command sent by the server does not have a -oA option, the client add it anyway to the command, so it will always have a local copy of the output.
+- If the server sends a min-rate parameter, it is striped out.
+- You can control the nmap scanning rate regarthless of servers sent parameters.
+- Tell the server if you are root or not, so it can change the nmap commands accordingly.
+
+
+
+
+Sample output of the server
+---------------------------
+=| MET:5:43:32.837276 | Amount of Online clients: 2 |=
+Clients connected
+-----------------
+Alias           #Commands       Last Time Seen  (time ago)      UpTime          Version IsRoot    RunCmdXMin      AvrCmdXMin      Status
+test1           765             Mar 11 21:35:02 ( 0'12")         4h 6m          0.3     True             5.2            4.6       Executing
+test2           698             Mar 11 21:34:59 ( 0'14")         5h43m          0.3     True             2.0            3.2       Executing
+
+
+Here MET means Mission Elapsed Time (http://en.wikipedia.org/wiki/Mission_Elapsed_Time).
+
+
+Security
+--------
+This framework is NOT intended to be secure or to be used by people you do not trust. As the client will execute any nmap command you send, the client is trusting you. This was created so your friends can help you in the scan, or to use all your computers at the same time.
+
+The client does not need to be run as root, but be aware that most nmap scan types need the client to be run as root. If some of your clients are not root, you can still send them TCP connect type of scans for example. But this should be done by you in the nmap commands file.
+
+
+About nmap file commands creation
+---------------------------------
+Nmap is a great tool and it can manage large scans quite well. It is not wise to send only one port and one host to each of your clients. You would want to send at least one host with a lot of ports to each client. Or one different network to each client. If you divide the commands too much the distributed scan will be slower that one unique computer.
+
+Example commands in the file that are OK:
+nmap -sS -p22 192.168.1.0/24 -v -n -oA 192.168.1.0
+nmap -sS -p22 192.168.2.0/24 -v -n -oA 192.168.3.0
+nmap -sS -p22 192.168.3.0/24 -v -n -oA 192.168.4.0
+nmap -sP -p22 192.168.3.0/24 -v -n -oA 192.168.4.0
+nmap -sS --top-ports 100 192.168.3.3 -v -n -oA 192.168.3.3.top100
+nmap -sS --top-ports 100 192.168.3.4 -v -n -oA 192.168.3.4.top100
+nmap -sS --top-ports 100 192.168.3.5 -v -n -oA 192.168.3.5.top100
+
+
+Example commands in the file you should avoid:
+nmap -sS -p22 192.168.1.1 -v -n -oA 192.168.1.1
+nmap -sS -p22 192.168.1.2 -v -n -oA 192.168.1.2
+nmap -sS -p22 192.168.1.3 -v -n -oA 192.168.1.3
+
+
+
+
+Motivation
+----------
+We needed to scan a very large group of networks searching for a group of ports. In these scenario it was advisable to distribute the scanning as much as possible.
+So we have to create this distributed nmap.
+
+
