@@ -29,7 +29,7 @@ python dnmapR_server.py -f commands.txt -i 127.0.0.1 -p 46001 -P server.pem
 # Terminal 2 - Client 1. Connect to VPS1, and setup an SSH tunnel that redirects all traffic hitting 127.0.0.1:46001 on VPS1 to the server on 127.0.0.1:46001
 ssh user@vps1 -R 46001:127.0.0.1:46001
 
-# Instruct the client to connect on 127.0.0.1:460001 to utilize the SSH tunnel
+# Instruct the client to connect on 127.0.0.1:46001 to utilize the SSH tunnel
 python dnmapR_client.py -s 127.0.0.1 -p 46001 -a vps1
 
 # Terminal 3 - Client 2. Connect to VPS2, and setup an SSH tunnel that redirects all traffic hitting 127.0.0.1:46001 on VPS2 to the server on 127.0.0.1:46001
