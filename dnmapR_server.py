@@ -365,7 +365,7 @@ def process_input_line(data, ourtransport, clientID):
 
             send_one_more_command(ourtransport, clientID)
 
-        elif 'Nmap Output File' in data and not nmapOutputComingBack:
+        elif 'nmap output file' in data and not nmapOutputComingBack:
             # Nmap output start to come back...
             nmapOutputComingBack = True
             
@@ -400,7 +400,7 @@ def process_input_line(data, ourtransport, clientID):
             outputFileDescriptor.writelines('Client ID:' + clientID + ':Alias:' + alias)
             outputFileDescriptor.flush()
             
-        elif nmapOutputComingBack and 'Nmap Output Finished' not in data:
+        elif 'nmap output finished' not in data and nmapOutputComingBack:
             # Store the output to a file.
             alias = clients[clientID]['Alias']
 
@@ -412,7 +412,7 @@ def process_input_line(data, ourtransport, clientID):
             outputFileDescriptor.writelines(data + '\n')
             outputFileDescriptor.flush()
          
-        elif 'Nmap Output Finished' in data and nmapOutputComingBack:
+        elif 'nmap output finished' in data and nmapOutputComingBack:
             # Nmap output finished
             nmapOutputComingBack = False
 
