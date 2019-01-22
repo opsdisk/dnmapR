@@ -1,3 +1,5 @@
+**This project is no longer maintained.  See Scantron for a distributed nmap/masscan framework (<https://github.com/rackerlabs/scantron>)**
+
 # dnmapR
 dnmap revised (dnmapR) is a modernized and enhanced version of dnmap
 
